@@ -14,7 +14,7 @@ static void write_sector(std::vector<bool>& bits, unsigned& cursor, const Sector
 	if ((sector->data.size() != 256) && (sector->data.size() != MICROPOLIS_ENCODED_SECTOR_SIZE))
 		Error() << "unsupported sector size --- you must pick 256 or 275";
 
-	int fullSectorSize = 40 + MICROPOLIS_ENCODED_SECTOR_SIZE + 40 + 35;
+	int fullSectorSize = 40 + MICROPOLIS_ENCODED_SECTOR_SIZE + 40;
 	auto fullSector = std::make_shared<std::vector<uint8_t>>();
 	fullSector->reserve(fullSectorSize);
 	/* sector preamble */
@@ -41,20 +41,21 @@ static void write_sector(std::vector<bool>& bits, unsigned& cursor, const Sector
 	/* sector postamble */
 	for (int i=0; i<40; i++)
 		fullSector->push_back(0);
-	/* filler */
-	for (int i=0; i<35; i++)
-		fullSector->push_back(0);
 
 	if (fullSector->size() != fullSectorSize)
 		Error() << "sector mismatched length";
 	bool lastBit = false;
 	encodeMfm(bits, cursor, fullSector, lastBit);
-	/* filler */
-	for (int i=0; i<5; i++)
+	/* arbitrary filler */
+	for (int i=0; i<568 / 4; i++)
 	{
+		bits[cursor++] = 0;
 		bits[cursor++] = 1;
 		bits[cursor++] = 0;
+		bits[cursor++] = 0;
 	}
+	bits[cursor++] = 1;
+	bits[cursor++] = 0;
 }
 
 std::unique_ptr<Fluxmap> MicropolisEncoder::encode(
